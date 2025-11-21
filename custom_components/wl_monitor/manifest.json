@@ -1,8 +1,0 @@
-{
-  "domain": "wl_monitor",
-  "name": "WL Monitor",
-  "documentation": "https://github.com/0Paul89/wl_monitor",
-  "issue_tracker": "https://github.com/0Paul89/wl_monitor/issues",
-  "codeowners": ["@0Paul89"],
-  "version": "1.0.0"
-}

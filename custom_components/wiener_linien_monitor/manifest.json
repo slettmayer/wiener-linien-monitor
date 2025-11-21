@@ -1,0 +1,10 @@
+{
+  "domain": "wiener_linien_monitor",
+  "name": "Wiener Linien Monitor",
+  "documentation": "https://github.com/slettmayer/wiener-linien-monitor",
+  "issue_tracker": "https://github.com/slettmayer/wiener-linien-monitor/issues",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "codeowners": ["@0Paul89", "@slettmayer"],
+  "version": "0.1.0"
+}

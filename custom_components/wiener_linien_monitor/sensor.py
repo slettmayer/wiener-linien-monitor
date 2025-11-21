@@ -119,12 +119,13 @@ class WienerLinienSensor(SensorEntity):
             self._attributes = {
                 "stop_id": self._stop_id,
                 "stop_name": stop_name,
-                "departures": departures,
+                "departures": departures[:5], # only take 5 departures for now. TODO: add config for that
                 "server_time": data.get("message", {}).get("serverTime"),
             }
             
             # ADD THIS SECTION - Fetch traffic info (disturbances):
-            await self._fetch_traffic_info()
+            # comment that out for now. TODO: Refactor that later
+            # await self._fetch_traffic_info()
             
         except aiohttp.ClientError as err:
             _LOGGER.error("Error fetching data for stop %s: %s", self._stop_id, err)
