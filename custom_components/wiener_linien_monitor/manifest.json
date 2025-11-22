@@ -6,5 +6,5 @@
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "codeowners": ["@0Paul89", "@slettmayer"],
-  "version": "0.1.0"
+  "version": "0.2.0"
 }

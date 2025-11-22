@@ -1,0 +1,14 @@
+{
+  "services": {
+    "fetch_departures": {
+      "description": "Call Wiener Linien API to get next departures for that stop id. See https://till.mabe.at/rbl/ to get the stop id.",
+      "fields": {
+        "stop_id": {
+          "description": "See https://till.mabe.at/rbl/ to get the stop id.",
+          "name": "Stop ID"
+        }
+      },
+      "name": "Fetch Departures"
+    }
+  }
+}
