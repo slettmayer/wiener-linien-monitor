@@ -1,176 +1,132 @@
-from datetime import timedelta
-from asyncio import timeout
+"""Sensor platform for the Wiener Linien Monitor integration."""
+
+from __future__ import annotations
+
 import logging
+from typing import Any
 
 import aiohttp
 import voluptuous as vol
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
 from homeassistant.const import CONF_NAME
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import Throttle
 
-_LOGGER = logging.getLogger(__name__)
+from .api import async_fetch_departures
+from .const import (
+    CONF_MAX_DEPARTURES,
+    CONF_STOPS,
+    DEFAULT_MAX_DEPARTURES,
+    DEFAULT_NAME,
+    MIN_TIME_BETWEEN_UPDATES,
+    TRAFFIC_INFO_ENDPOINT,
+)
 
-CONF_STOPS = "stops"
-DEFAULT_NAME = "Wiener Linien"
-MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=60)
+_LOGGER = logging.getLogger(__name__)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Required(CONF_STOPS): vol.All(cv.ensure_list, [cv.string]),
+        vol.Optional(
+            CONF_MAX_DEPARTURES, default=DEFAULT_MAX_DEPARTURES
+        ): cv.positive_int,
     }
 )
 
-API_ENDPOINT = "http://www.wienerlinien.at/ogd_realtime/monitor"
-TRAFFIC_INFO_ENDPOINT = "http://www.wienerlinien.at/ogd_realtime/trafficInfoList"
 
-
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(
+    hass: HomeAssistant,
+    config: ConfigType,
+    async_add_entities: AddEntitiesCallback,
+    discovery_info: DiscoveryInfoType | None = None,
+) -> None:
     """Set up the Wiener Linien sensor."""
-    name = config.get(CONF_NAME)
-    stops = config.get(CONF_STOPS)
+    name: str = config[CONF_NAME]
+    stops: list[str] = config[CONF_STOPS]
+    max_departures: int = config[CONF_MAX_DEPARTURES]
 
     session = async_get_clientsession(hass)
 
-    sensors = []
-    for stop_id in stops:
-        sensor = WienerLinienSensor(name, stop_id, session)
-        sensors.append(sensor)
-
+    sensors = [
+        WienerLinienSensor(name, stop_id, session, max_departures)
+        for stop_id in stops
+    ]
     async_add_entities(sensors, True)
 
 
 class WienerLinienSensor(SensorEntity):
     """Representation of a Wiener Linien sensor."""
 
-    def __init__(self, name, stop_id, session):
+    _attr_icon = "mdi:bus-clock"
+
+    def __init__(
+        self,
+        name: str,
+        stop_id: str,
+        session: aiohttp.ClientSession,
+        max_departures: int,
+    ) -> None:
         """Initialize the sensor."""
-        self._name = f"{name} {stop_id}"
+        self._attr_name = f"{name} {stop_id}"
+        self._attr_unique_id = f"wienerlinien_{stop_id}"
         self._stop_id = stop_id
         self._session = session
-        self._state = None
-        self._attributes = {}
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return f"wienerlinien_{self._stop_id}"
-
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        return self._state
-
-    @property
-    def extra_state_attributes(self):
-        """Return the state attributes."""
-        return self._attributes
+        self._max_departures = max_departures
+        self._attr_native_value: int | None = None
+        self._attr_extra_state_attributes: dict[str, Any] = {}
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    async def async_update(self):
+    async def async_update(self) -> None:
         """Fetch new state data for the sensor."""
-        try:
-            url = f"{API_ENDPOINT}?stopId={self._stop_id}"
-            async with timeout(10):
-                response = await self._session.get(url)
-                data = await response.json()
+        result = await async_fetch_departures(self._session, self._stop_id)
 
-            if not data.get("data", {}).get("monitors"):
-                _LOGGER.warning("No monitor data for stop %s", self._stop_id)
-                return
+        if "message" in result:
+            return
 
-            monitors = data["data"]["monitors"]
-            departures = []
-            stop_name = "Unknown"
+        self._attr_native_value = result["departures_count"]
+        self._attr_extra_state_attributes = {
+            "stop_id": self._stop_id,
+            "stop_name": result["stop_name"],
+            "departures": result["departures"][: self._max_departures],
+            "server_time": result["server_time"],
+        }
 
-            if monitors:
-                # Get stop name from first monitor
-                stop_name = (
-                    monitors[0]
-                    .get("locationStop", {})
-                    .get("properties", {})
-                    .get("title", "Unknown")
-                )
-
-                # Process all lines and departures
-                for monitor in monitors:
-                    lines = monitor.get("lines", [])
-                    for line in lines:
-                        line_departures = line.get("departures", {}).get(
-                            "departure", []
-                        )
-                        for departure in line_departures:
-                            dep_time = departure.get("departureTime", {})
-                            vehicle = departure.get("vehicle", {})
-
-                            departure_info = {
-                                "line": line.get("name"),
-                                "direction": line.get("towards"),
-                                "platform": line.get("platform"),
-                                "time_planned": dep_time.get("timePlanned"),
-                                "time_real": dep_time.get("timeReal"),
-                                "countdown": dep_time.get("countdown"),
-                                "barrier_free": vehicle.get("barrierFree", False),
-                                "folding_ramp": vehicle.get("foldingRamp", False),
-                                "type": vehicle.get("type"),
-                            }
-                            departures.append(departure_info)
-
-            # Sort by countdown
-            departures.sort(key=lambda x: x.get("countdown", 999))
-
-            self._state = len(departures)
-            self._attributes = {
-                "stop_id": self._stop_id,
-                "stop_name": stop_name,
-                "departures": departures[
-                    :5
-                ],  # only take 5 departures for now. TODO: add config for that
-                "server_time": data.get("message", {}).get("serverTime"),
-            }
-
-        except aiohttp.ClientError as err:
-            _LOGGER.error("Error fetching data for stop %s: %s", self._stop_id, err)
-        except Exception as err:
-            _LOGGER.error("Unexpected error for stop %s: %s", self._stop_id, err)
-
-    async def _fetch_traffic_info(self):
+    async def _fetch_traffic_info(self) -> None:
         """Fetch traffic information (disturbances) for this stop."""
+        import asyncio
+
         try:
-            # Get all lines at this stop
             lines_at_stop = list(
-                set(
-                    [
-                        dep["line"]
-                        for dep in self._attributes.get("departures", [])
-                        if dep.get("line")
-                    ]
-                )
+                {
+                    dep["line"]
+                    for dep in self._attr_extra_state_attributes.get(
+                        "departures", []
+                    )
+                    if dep.get("line")
+                }
             )
 
             if not lines_at_stop:
-                self._attributes["traffic_info"] = []
+                self._attr_extra_state_attributes["traffic_info"] = []
                 return
 
-            # Build URL with line filters
-            line_params = "&".join([f"relatedLine={line}" for line in lines_at_stop])
+            line_params = "&".join(
+                [f"relatedLine={line}" for line in lines_at_stop]
+            )
             url = f"{TRAFFIC_INFO_ENDPOINT}?{line_params}&relatedStop={self._stop_id}"
 
-            async with timeout(10):
+            async with asyncio.timeout(10):
                 response = await self._session.get(url)
                 traffic_data = await response.json()
 
             traffic_info = []
 
-            # Parse traffic info
             if traffic_data.get("data", {}).get("trafficInfos"):
                 for info in traffic_data["data"]["trafficInfos"]:
                     traffic_info.append(
@@ -184,11 +140,9 @@ class WienerLinienSensor(SensorEntity):
                         }
                     )
 
-            # Add traffic info to attributes
-            self._attributes["traffic_info"] = traffic_info
+            self._attr_extra_state_attributes["traffic_info"] = traffic_info
 
-            # Add disturbances to individual departures
-            for dep in self._attributes.get("departures", []):
+            for dep in self._attr_extra_state_attributes.get("departures", []):
                 dep["disturbances"] = [
                     ti
                     for ti in traffic_info
@@ -197,6 +151,8 @@ class WienerLinienSensor(SensorEntity):
 
         except Exception as err:
             _LOGGER.warning(
-                "Could not fetch traffic info for stop %s: %s", self._stop_id, err
+                "Could not fetch traffic info for stop %s: %s",
+                self._stop_id,
+                err,
             )
-            self._attributes["traffic_info"] = []
+            self._attr_extra_state_attributes["traffic_info"] = []
