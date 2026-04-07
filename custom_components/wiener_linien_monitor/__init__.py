@@ -96,10 +96,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 "server_time": data.get("message", {}).get("serverTime"),
             }
 
-            # ADD THIS SECTION - Fetch traffic info (disturbances):
-            # comment that out for now. TODO: Refactor that later
-            # await self._fetch_traffic_info()
-
         except aiohttp.ClientError as err:
             _LOGGER.error("Error fetching data for stop %s: %s", stop_id, err)
             return {"message": "No data"}

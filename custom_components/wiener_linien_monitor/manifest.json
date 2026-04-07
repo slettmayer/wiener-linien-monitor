@@ -3,8 +3,9 @@
   "name": "Wiener Linien Monitor",
   "documentation": "https://github.com/slettmayer/wiener-linien-monitor",
   "issue_tracker": "https://github.com/slettmayer/wiener-linien-monitor/issues",
+  "homeassistant": "2024.1.0",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "codeowners": ["@0Paul89", "@slettmayer"],
-  "version": "0.2.0"
+  "version": "0.3.1"
 }

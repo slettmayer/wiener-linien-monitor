@@ -25,7 +25,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 API_ENDPOINT = "http://www.wienerlinien.at/ogd_realtime/monitor"
-# ADD THIS LINE:
 TRAFFIC_INFO_ENDPOINT = "http://www.wienerlinien.at/ogd_realtime/trafficInfoList"
 
 
@@ -138,16 +137,11 @@ class WienerLinienSensor(SensorEntity):
                 "server_time": data.get("message", {}).get("serverTime"),
             }
 
-            # ADD THIS SECTION - Fetch traffic info (disturbances):
-            # comment that out for now. TODO: Refactor that later
-            # await self._fetch_traffic_info()
-
         except aiohttp.ClientError as err:
             _LOGGER.error("Error fetching data for stop %s: %s", self._stop_id, err)
         except Exception as err:
             _LOGGER.error("Unexpected error for stop %s: %s", self._stop_id, err)
 
-    # ADD THIS ENTIRE METHOD:
     async def _fetch_traffic_info(self):
         """Fetch traffic information (disturbances) for this stop."""
         try:
