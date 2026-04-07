@@ -46,9 +46,7 @@ async def async_fetch_departures(
             for monitor in monitors:
                 lines = monitor.get("lines", [])
                 for line in lines:
-                    line_departures = line.get("departures", {}).get(
-                        "departure", []
-                    )
+                    line_departures = line.get("departures", {}).get("departure", [])
                     for departure in line_departures:
                         dep_time = departure.get("departureTime", {})
                         vehicle = departure.get("vehicle", {})
@@ -61,12 +59,8 @@ async def async_fetch_departures(
                                 "time_planned": dep_time.get("timePlanned"),
                                 "time_real": dep_time.get("timeReal"),
                                 "countdown": dep_time.get("countdown"),
-                                "barrier_free": vehicle.get(
-                                    "barrierFree", False
-                                ),
-                                "folding_ramp": vehicle.get(
-                                    "foldingRamp", False
-                                ),
+                                "barrier_free": vehicle.get("barrierFree", False),
+                                "folding_ramp": vehicle.get("foldingRamp", False),
                                 "type": vehicle.get("type"),
                             }
                         )
@@ -81,7 +75,7 @@ async def async_fetch_departures(
             "server_time": data.get("message", {}).get("serverTime"),
         }
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         _LOGGER.error("Timeout fetching data for stop %s", stop_id)
         return {"message": "Timeout"}
     except aiohttp.ClientError as err:
