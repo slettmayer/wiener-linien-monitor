@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Wiener Linien Monitor",
-        "description": "Wiener Linien Abfahrtsmonitor einrichten. Haltestellennummern findest du unter https://till.mabe.at/rbl/",
+        "description": "Wiener Linien Abfahrtsmonitor einrichten.",
         "data": {
           "name": "Name",
           "stops": "Haltestellennummern (kommagetrennt)"
@@ -33,11 +33,11 @@
   "services": {
     "fetch_departures": {
       "name": "Abfahrten abrufen",
-      "description": "Wiener Linien API aufrufen, um die nächsten Abfahrten für eine Haltestellennummer abzurufen. Siehe https://till.mabe.at/rbl/ für die Haltestellennummer.",
+      "description": "Wiener Linien API aufrufen, um die nächsten Abfahrten für eine Haltestellennummer abzurufen.",
       "fields": {
         "stop_id": {
           "name": "Haltestellennummer",
-          "description": "Siehe https://till.mabe.at/rbl/ für die Haltestellennummer."
+          "description": "Numerische Haltestellennummer."
         }
       }
     }

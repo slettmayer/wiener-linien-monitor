@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import aiohttp
 import pytest
@@ -29,11 +28,7 @@ SAMPLE_API_RESPONSE = {
     "data": {
         "monitors": [
             {
-                "locationStop": {
-                    "properties": {
-                        "title": "Karlsplatz"
-                    }
-                },
+                "locationStop": {"properties": {"title": "Karlsplatz"}},
                 "lines": [
                     {
                         "name": "U1",
@@ -184,7 +179,7 @@ async def test_fetch_departures_client_error() -> None:
 @pytest.mark.asyncio
 async def test_fetch_departures_timeout() -> None:
     """Test handling of timeout errors."""
-    session = _make_session({}, raise_error=asyncio.TimeoutError())
+    session = _make_session({}, raise_error=TimeoutError())
 
     result = await async_fetch_departures(session, "4609")
 
@@ -198,9 +193,7 @@ async def test_fetch_departures_empty_departures() -> None:
         "data": {
             "monitors": [
                 {
-                    "locationStop": {
-                        "properties": {"title": "Stephansplatz"}
-                    },
+                    "locationStop": {"properties": {"title": "Stephansplatz"}},
                     "lines": [
                         {
                             "name": "U3",

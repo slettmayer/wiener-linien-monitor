@@ -1,4 +1,4 @@
-"""Conftest for tests — mock homeassistant imports so api.py can be tested standalone."""
+"""Mock homeassistant imports so api.py can be tested standalone."""
 
 from __future__ import annotations
 
