@@ -1,42 +1,62 @@
-name: Release
+name: Auto Release
 
 on:
-  push:
-    branches:
-      - main
-
-permissions:
-  contents: write
+  workflow_run:
+    workflows: ["Validate"]
+    types: [completed]
+    branches: [main]
 
 jobs:
   release:
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
-      - name: Get version from manifest
+      - name: Extract version from manifest.json
         id: version
         run: |
-          VERSION=$(jq -r '.version' custom_components/wiener_linien_monitor/manifest.json)
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          version=$(jq -r '.version' custom_components/wiener_linien_monitor/manifest.json)
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
 
-      - name: Check if tag exists
+      - name: Check if release already exists
         id: check
         run: |
-          if git tag -l "${{ steps.version.outputs.tag }}" | grep -q .; then
+          if gh release view "${TAG}" > /dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract changelog section
+        if: steps.check.outputs.exists == 'false'
+        id: notes
+        run: |
+          notes=$(awk -v ver="${VERSION}" '
+            $0 == "## " ver { found=1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md | sed -e '/^$/N;/^\n$/d' -e 's/^[[:space:]]*//')
+          echo "${notes}" > /tmp/release-notes.md
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
 
       - name: Create release
         if: steps.check.outputs.exists == 'false'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ steps.version.outputs.tag }}" \
-            --title "${{ steps.version.outputs.tag }}" \
-            --generate-notes
+          gh release create "${TAG}" \
+            --title "${TAG}" \
+            --target "${{ github.event.workflow_run.head_sha }}" \
+            --notes-file /tmp/release-notes.md
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
