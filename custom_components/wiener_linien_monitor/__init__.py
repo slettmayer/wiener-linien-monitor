@@ -31,7 +31,7 @@ PLATFORMS = ["sensor"]
 
 FETCH_DEPARTURES_SCHEMA = vol.Schema(
     {
-        vol.Required("stop_id"): str,
+        vol.Required("stop_id"): vol.Coerce(str),
     }
 )
 
