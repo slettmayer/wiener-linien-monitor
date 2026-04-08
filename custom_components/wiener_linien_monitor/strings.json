@@ -1,14 +1,45 @@
 {
+  "config": {
+    "step": {
+      "user": {
+        "title": "Wiener Linien Monitor",
+        "description": "Set up a Wiener Linien departure monitor. Find stop IDs at https://till.mabe.at/rbl/",
+        "data": {
+          "name": "Name",
+          "stops": "Stop IDs (comma-separated)"
+        }
+      }
+    },
+    "error": {
+      "no_stops": "Please enter at least one stop ID.",
+      "invalid_stop_id": "Stop IDs must be numeric."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Wiener Linien Monitor Options",
+        "data": {
+          "stops": "Stop IDs (comma-separated)",
+          "max_departures": "Max departures per stop"
+        }
+      }
+    },
+    "error": {
+      "no_stops": "Please enter at least one stop ID.",
+      "invalid_stop_id": "Stop IDs must be numeric."
+    }
+  },
   "services": {
     "fetch_departures": {
-      "description": "Call Wiener Linien API to get next departures for that stop id. See https://till.mabe.at/rbl/ to get the stop id.",
+      "name": "Fetch Departures",
+      "description": "Call Wiener Linien API to get next departures for that stop ID. See https://till.mabe.at/rbl/ to get the stop ID.",
       "fields": {
         "stop_id": {
-          "description": "See https://till.mabe.at/rbl/ to get the stop id.",
-          "name": "Stop ID"
+          "name": "Stop ID",
+          "description": "See https://till.mabe.at/rbl/ to get the stop ID."
         }
-      },
-      "name": "Fetch Departures"
+      }
     }
   }
 }
