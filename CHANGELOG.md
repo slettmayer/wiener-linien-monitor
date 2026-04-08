@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+- Automate releases: version change in manifest.json triggers tag + GitHub release after validation passes
+- Add dependabot auto-bump: patch version and changelog entry created automatically on Dependabot PRs
+- Add gate job to Validate workflow for branch protection
+- Add Dependabot config for GitHub Actions
+- Add CHANGELOG.md with historical release entries
+
 ## 0.4.1
 
 - Fix: service rejecting integer stop_id values
