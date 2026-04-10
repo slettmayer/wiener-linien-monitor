@@ -40,6 +40,68 @@
           "description": "Numerische Haltestellennummer."
         }
       }
+    },
+    "oebb_search_station": {
+      "name": "ÖBB: Station suchen",
+      "description": "ÖBB-Stationen nach Name suchen, um Stations-IDs zu finden.",
+      "fields": {
+        "query": {
+          "name": "Suchbegriff",
+          "description": "Stationsname oder Teilname zum Suchen."
+        },
+        "max_results": {
+          "name": "Max. Ergebnisse",
+          "description": "Maximale Anzahl der zurückgegebenen Stationen."
+        }
+      }
+    },
+    "oebb_station_board": {
+      "name": "ÖBB: Abfahrtstafel",
+      "description": "Abfahrten oder Ankünfte an einer ÖBB-Station abrufen.",
+      "fields": {
+        "station_id": {
+          "name": "Stations-ID",
+          "description": "ÖBB Stations-ID (extId). Verwenden Sie oebb_search_station um diese zu finden."
+        },
+        "station_name": {
+          "name": "Stationsname",
+          "description": "Stationsname für automatische Suche. Wird verwendet, wenn keine Stations-ID angegeben ist."
+        },
+        "board_type": {
+          "name": "Tafeltyp",
+          "description": "DEP für Abfahrten, ARR für Ankünfte."
+        },
+        "max_journeys": {
+          "name": "Max. Fahrten",
+          "description": "Maximale Anzahl der Abfahrten oder Ankünfte."
+        }
+      }
+    },
+    "oebb_trip_search": {
+      "name": "ÖBB: Verbindungssuche",
+      "description": "Zugverbindungen zwischen zwei ÖBB-Stationen suchen.",
+      "fields": {
+        "from_station_id": {
+          "name": "Von Stations-ID",
+          "description": "Stations-ID des Abfahrtsbahnhofs."
+        },
+        "from_station_name": {
+          "name": "Von Stationsname",
+          "description": "Name des Abfahrtsbahnhofs für automatische Suche."
+        },
+        "to_station_id": {
+          "name": "Nach Stations-ID",
+          "description": "Stations-ID des Zielbahnhofs."
+        },
+        "to_station_name": {
+          "name": "Nach Stationsname",
+          "description": "Name des Zielbahnhofs für automatische Suche."
+        },
+        "max_connections": {
+          "name": "Max. Verbindungen",
+          "description": "Maximale Anzahl der zurückgegebenen Verbindungen."
+        }
+      }
     }
   }
 }

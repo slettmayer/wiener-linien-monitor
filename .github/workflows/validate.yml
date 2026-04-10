@@ -44,7 +44,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install pytest pytest-asyncio aiohttp voluptuous homeassistant
-      - run: pytest tests/ -v
+      - run: pytest tests/ -v -m "not integration"
 
   gate:
     name: gate

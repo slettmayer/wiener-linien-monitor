@@ -19,7 +19,8 @@ Documents the project structure, module boundaries, data flow, and architectural
 ```
 custom_components/wiener_linien_monitor/
   __init__.py       # Entry point: setup, teardown, service registration
-  api.py            # Pure async API client (no HA imports)
+  api.py            # Pure async API client for Wiener Linien (no HA imports)
+  oebb_api.py       # Pure async API client for OeBB Scotty (no HA imports)
   coordinator.py    # DataUpdateCoordinator subclass (polling, error recovery)
   sensor.py         # SensorEntity platform (YAML + config entry setup)
   config_flow.py    # ConfigFlow + OptionsFlow (UI-driven setup)
@@ -29,8 +30,10 @@ custom_components/wiener_linien_monitor/
   services.yaml     # Service schema for HA UI
   translations/     # en.json, de.json
 tests/
-  conftest.py       # HA mock injection via sys.modules
-  test_api.py       # Unit tests for api.py
+  conftest.py                  # HA mock injection via sys.modules
+  test_api.py                  # Unit tests for api.py
+  test_oebb_api.py             # Unit tests for oebb_api.py
+  test_oebb_api_integration.py # Integration tests (real OeBB API)
 ```
 
 ### Architectural Pattern
@@ -51,6 +54,13 @@ api.py  <--  coordinator.py  <--  sensor.py
 - Output: normalized departure dict or error dict with `"message"` key
 - Zero HA imports. Independently testable.
 
+**`oebb_api.py`** -- Owns all HTTP communication with the OeBB Scotty API.
+- Three public functions: `async_oebb_search_station`, `async_oebb_station_board`, `async_oebb_trip_search`
+- Internal helpers: `_build_request_body` (POST envelope), `_async_resolve_station` (station name-to-ID resolution via LocMatch), `_format_oebb_time` (date+time to ISO 8601)
+- Accepts station IDs (`extId`) or station names (auto-resolved via LocMatch) for board/trip services
+- Output: normalized dicts or error dict with `"message"` key
+- Zero HA imports. Independently testable.
+
 **`coordinator.py`** -- Owns polling lifecycle for a single stop.
 - Wraps `api.py` in a `DataUpdateCoordinator`
 - Polls every 60 seconds (configurable via `const.SCAN_INTERVAL`)
@@ -64,7 +74,11 @@ api.py  <--  coordinator.py  <--  sensor.py
 
 **`__init__.py`** -- Owns entry lifecycle and service registration.
 - Creates one coordinator per stop on `async_setup_entry`
-- Registers `wiener_linien_monitor.fetch_departures` service (calls API directly, bypasses coordinator)
+- Registers four services in `async_setup`:
+  - `fetch_departures` -- Wiener Linien departures (calls `api.py` directly)
+  - `oebb_search_station` -- OeBB station search by name
+  - `oebb_station_board` -- OeBB departures/arrivals at a station
+  - `oebb_trip_search` -- OeBB connections between two stations
 - Stores coordinators in `hass.data[DOMAIN][entry.entry_id]`
 
 **`config_flow.py`** -- Owns UI setup and options editing.
@@ -86,13 +100,22 @@ api.py  <--  coordinator.py  <--  sensor.py
 
 The on-demand service (`fetch_departures`) bypasses steps 2-3 and calls `api.py` directly, returning data as a service response without updating sensor state.
 
+### OeBB Data Flow (on-demand services only, no sensor entities)
+
+1. User calls a service (e.g., `oebb_trip_search`) with station IDs or names
+2. `__init__.py` handler calls the corresponding `oebb_api.py` function
+3. If station names given: `_async_resolve_station` calls LocMatch to resolve to IDs
+4. `oebb_api.py` sends POST to `https://fahrplan.oebb.at/bin/mgate.exe` with the appropriate method (LocMatch, StationBoard, or TripSearch)
+5. Response is parsed: product names resolved from `common.prodL`, times converted to ISO 8601, locations resolved from `common.locL`
+6. Normalized result returned directly as service response
+
 ### Dual Setup Support
 Both YAML and config entry setup paths are supported for backwards compatibility:
 - YAML: `async_setup_platform` in `sensor.py` creates coordinators and sensors directly
 - Config entry: `async_setup_entry` in `__init__.py` creates coordinators, then `async_setup_entry` in `sensor.py` creates sensors from stored coordinators
 
 ## Dependencies
-- Internal: `const.py` is imported by all other modules. `api.py` is imported by `coordinator.py` and `__init__.py`. `coordinator.py` is imported by `sensor.py` and `__init__.py`.
+- Internal: `const.py` is imported by all other modules. `api.py` is imported by `coordinator.py` and `__init__.py`. `oebb_api.py` is imported by `__init__.py`. `coordinator.py` is imported by `sensor.py` and `__init__.py`.
 - External: `homeassistant` core, `aiohttp`, `voluptuous`
 
 ## Design Decisions
@@ -105,6 +128,7 @@ Both YAML and config entry setup paths are supported for backwards compatibility
 - Sentinel dict error pattern is fragile: callers must remember to check `if "message" in result`. An exception-based approach would be more Pythonic and harder to miss.
 - YAML setup path duplicates coordinator creation logic that also exists in `__init__.py`. If one path is updated, the other may be forgotten.
 - No rate limiting or backoff on API errors -- repeated failures still poll every 60s.
+- OeBB Scotty API is reverse-engineered from the webapp -- response structure may change without notice. Integration tests help catch this early.
 
 ## Extension Guidelines
 - New modules should follow the existing layering: pure logic with no HA deps where possible, HA integration in a separate module.

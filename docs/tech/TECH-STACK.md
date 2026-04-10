@@ -44,8 +44,9 @@ Documents the languages, frameworks, build tools, testing infrastructure, and ex
 - Dependabot configured for weekly GitHub Actions dependency updates.
 
 ### External APIs
-- Wiener Linien OGD Realtime API (`https://www.wienerlinien.at/ogd_realtime/monitor`) -- sole external dependency, read-only, public, no auth required.
-- A second endpoint (`trafficInfoList`) is defined in `const.py` but not currently used.
+- Wiener Linien OGD Realtime API (`https://www.wienerlinien.at/ogd_realtime/monitor`) -- read-only, public, no auth required.
+- A second Wiener Linien endpoint (`trafficInfoList`) is defined in `const.py` but not currently used.
+- OeBB Scotty API (`https://fahrplan.oebb.at/bin/mgate.exe`) -- JSON POST API with embedded authentication (AID token). Used for station search, station boards, and trip planning. Not officially documented (reverse-engineered from webapp).
 
 ### Distribution
 - HACS (Home Assistant Community Store) -- configured via `hacs.json`
@@ -54,7 +55,7 @@ Documents the languages, frameworks, build tools, testing infrastructure, and ex
 ## Dependencies
 - Runtime: `homeassistant`, `aiohttp`, `voluptuous` (all provided by the HA environment)
 - Dev: `ruff`, `pytest`, `pytest-asyncio`, `uv`
-- External: Wiener Linien OGD Realtime API
+- External: Wiener Linien OGD Realtime API, OeBB Scotty API
 
 ## Design Decisions
 - `manifest.json` is the single source of truth for versioning (CI reads it exclusively). `pyproject.toml` version exists but is not authoritative.

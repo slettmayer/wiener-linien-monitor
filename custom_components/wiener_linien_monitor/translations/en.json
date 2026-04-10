@@ -40,6 +40,68 @@
           "description": "Numeric stop ID."
         }
       }
+    },
+    "oebb_search_station": {
+      "name": "OeBB: Search Station",
+      "description": "Search OeBB stations by name to find station IDs.",
+      "fields": {
+        "query": {
+          "name": "Search Query",
+          "description": "Station name or partial name to search for."
+        },
+        "max_results": {
+          "name": "Max Results",
+          "description": "Maximum number of stations to return."
+        }
+      }
+    },
+    "oebb_station_board": {
+      "name": "OeBB: Station Board",
+      "description": "Fetch departures or arrivals at an OeBB station.",
+      "fields": {
+        "station_id": {
+          "name": "Station ID",
+          "description": "OeBB station ID (extId). Use oebb_search_station to find this."
+        },
+        "station_name": {
+          "name": "Station Name",
+          "description": "Station name for automatic lookup. Used if Station ID is not provided."
+        },
+        "board_type": {
+          "name": "Board Type",
+          "description": "DEP for departures, ARR for arrivals."
+        },
+        "max_journeys": {
+          "name": "Max Journeys",
+          "description": "Maximum number of departures or arrivals to return."
+        }
+      }
+    },
+    "oebb_trip_search": {
+      "name": "OeBB: Trip Search",
+      "description": "Search for train connections between two OeBB stations.",
+      "fields": {
+        "from_station_id": {
+          "name": "From Station ID",
+          "description": "Departure station ID."
+        },
+        "from_station_name": {
+          "name": "From Station Name",
+          "description": "Departure station name for automatic lookup."
+        },
+        "to_station_id": {
+          "name": "To Station ID",
+          "description": "Arrival station ID."
+        },
+        "to_station_name": {
+          "name": "To Station Name",
+          "description": "Arrival station name for automatic lookup."
+        },
+        "max_connections": {
+          "name": "Max Connections",
+          "description": "Maximum number of connections to return."
+        }
+      }
     }
   }
 }
