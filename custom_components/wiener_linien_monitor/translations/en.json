@@ -100,6 +100,14 @@
         "max_connections": {
           "name": "Max Connections",
           "description": "Maximum number of connections to return."
+        },
+        "time": {
+          "name": "Time",
+          "description": "Departure or arrival time. If not set, the current time is used."
+        },
+        "time_mode": {
+          "name": "Time Mode",
+          "description": "Whether the specified time is a departure or arrival time."
         }
       }
     }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0
+
+- Add optional `time` and `time_mode` fields to `oebb_trip_search` for future trip planning
+- `time` accepts local time (CET/CEST); defaults to current time when omitted
+- `time_mode` selects between "departure" (default) and "arrival" search
+
 ## 0.6.0
 
 - Add OeBB (Austrian Federal Railways) service calls via the OeBB Scotty API

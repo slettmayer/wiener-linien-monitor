@@ -266,11 +266,15 @@ async def async_oebb_trip_search(
     to_station_id: str | None = None,
     to_station_name: str | None = None,
     max_connections: int = 5,
+    time: str | None = None,
+    time_mode: str = "departure",
 ) -> dict[str, Any]:
     """Search for train connections between two OeBB stations.
 
     Accepts station IDs (extId) or station names (auto-resolved via LocMatch)
     for both departure and arrival stations.
+    Optionally accepts a time (ISO 8601) and time_mode ("departure" or
+    "arrival") to plan future trips. Defaults to current time, departing.
     Returns a dict with connection details including legs.
     Returns a dict with just 'message' on error.
     """
@@ -287,7 +291,11 @@ async def async_oebb_trip_search(
         if not to_station:
             return {"message": "Arrival station not found"}
 
-        now = datetime.now()  # noqa: DTZ005
+        search_dt = (
+            datetime.fromisoformat(time) if time else datetime.now()  # noqa: DTZ005
+        )
+        out_frwd = time_mode != "arrival"
+
         body = _build_request_body(
             [
                 {
@@ -295,9 +303,9 @@ async def async_oebb_trip_search(
                     "req": {
                         "depLocL": [{"lid": from_station["lid"], "type": "S"}],
                         "arrLocL": [{"lid": to_station["lid"], "type": "S"}],
-                        "outDate": now.strftime("%Y%m%d"),
-                        "outTime": now.strftime("%H%M%S"),
-                        "outFrwd": True,
+                        "outDate": search_dt.strftime("%Y%m%d"),
+                        "outTime": search_dt.strftime("%H%M%S"),
+                        "outFrwd": out_frwd,
                         "numF": max_connections,
                         "jnyFltrL": [{"type": "PROD", "mode": "INC", "value": "1023"}],
                         "getPasslist": False,
@@ -326,7 +334,7 @@ async def async_oebb_trip_search(
 
         connections = []
         for con in out_con_list:
-            con_date = con.get("date", now.strftime("%Y%m%d"))
+            con_date = con.get("date", search_dt.strftime("%Y%m%d"))
             dep = con.get("dep", {})
             arr = con.get("arr", {})
 

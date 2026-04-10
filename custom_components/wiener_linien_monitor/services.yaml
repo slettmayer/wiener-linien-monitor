@@ -90,3 +90,16 @@ oebb_trip_search:
           min: 1
           max: 10
           mode: box
+    time:
+      required: false
+      example: "2026-04-15 08:00:00"
+      selector:
+        datetime:
+    time_mode:
+      required: false
+      default: "departure"
+      selector:
+        select:
+          options:
+            - "departure"
+            - "arrival"

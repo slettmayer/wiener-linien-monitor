@@ -557,3 +557,73 @@ async def test_oebb_trip_search_realtime_times() -> None:
     con1 = result["connections"][0]
     assert con1["departure_real"] == "2026-04-10T14:32:00"
     assert con1["arrival_real"] is None
+
+
+@pytest.mark.asyncio
+async def test_oebb_trip_search_with_departure_time() -> None:
+    """Test trip search with a specific departure time."""
+    session = _make_session(SAMPLE_TRIP_SEARCH_RESPONSE)
+
+    result = await async_oebb_trip_search(
+        session,
+        from_station_id="1190100",
+        to_station_id="8100002",
+        time="2026-04-15T08:00:00",
+        time_mode="departure",
+    )
+
+    assert "message" not in result
+    assert result["connections_count"] == 2
+
+    # Verify the POST body used the specified time and outFrwd=True
+    call_args = session.post.call_args
+    body = call_args.kwargs.get("json") or call_args[1].get("json")
+    req = body["svcReqL"][0]["req"]
+    assert req["outDate"] == "20260415"
+    assert req["outTime"] == "080000"
+    assert req["outFrwd"] is True
+
+
+@pytest.mark.asyncio
+async def test_oebb_trip_search_with_arrival_time() -> None:
+    """Test trip search with arrival time mode sets outFrwd to False."""
+    session = _make_session(SAMPLE_TRIP_SEARCH_RESPONSE)
+
+    result = await async_oebb_trip_search(
+        session,
+        from_station_id="1190100",
+        to_station_id="8100002",
+        time="2026-04-15T18:00:00",
+        time_mode="arrival",
+    )
+
+    assert "message" not in result
+
+    # Verify outFrwd is False for arrival mode
+    call_args = session.post.call_args
+    body = call_args.kwargs.get("json") or call_args[1].get("json")
+    req = body["svcReqL"][0]["req"]
+    assert req["outDate"] == "20260415"
+    assert req["outTime"] == "180000"
+    assert req["outFrwd"] is False
+
+
+@pytest.mark.asyncio
+async def test_oebb_trip_search_default_time() -> None:
+    """Test that omitting time uses current time (existing behavior)."""
+    session = _make_session(SAMPLE_TRIP_SEARCH_RESPONSE)
+
+    result = await async_oebb_trip_search(
+        session, from_station_id="1190100", to_station_id="8100002"
+    )
+
+    assert "message" not in result
+
+    # Verify outFrwd defaults to True
+    call_args = session.post.call_args
+    body = call_args.kwargs.get("json") or call_args[1].get("json")
+    req = body["svcReqL"][0]["req"]
+    assert req["outFrwd"] is True
+    # outDate and outTime should be set (to current time, not empty)
+    assert len(req["outDate"]) == 8
+    assert len(req["outTime"]) == 6
