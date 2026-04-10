@@ -86,6 +86,10 @@ OEBB_TRIP_SEARCH_SCHEMA = vol.All(
             vol.Optional("max_connections", default=5): vol.All(
                 int, vol.Range(min=1, max=10)
             ),
+            vol.Optional("time"): str,
+            vol.Optional("time_mode", default="departure"): vol.In(
+                ["departure", "arrival"]
+            ),
         }
     ),
     _require_one_of("from_station_id", "from_station_name"),
@@ -154,6 +158,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             to_station_id=call.data.get("to_station_id"),
             to_station_name=call.data.get("to_station_name"),
             max_connections=call.data.get("max_connections", 5),
+            time=call.data.get("time"),
+            time_mode=call.data.get("time_mode", "departure"),
         )
 
     hass.services.async_register(

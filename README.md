@@ -108,16 +108,31 @@ Search for train connections between two OeBB stations. Provide either ID or nam
 | `to_station_id`     | No*      | Arrival station ID                       |
 | `to_station_name`   | No*      | Arrival station name (auto-resolved)     |
 | `max_connections`   | No       | Max connections to return (default: 5)   |
+| `time`              | No       | Departure or arrival time in local time (default: now) |
+| `time_mode`         | No       | `departure` or `arrival` (default: `departure`) |
 
 \* At least one of `from_station_id`/`from_station_name` and one of `to_station_id`/`to_station_name` required.
 
-Example:
+**Note:** The `time` field expects local time (Austrian CET/CEST). If omitted, the current time is used.
+
+Example (next departures):
 ```yaml
 service: wiener_linien_monitor.oebb_trip_search
 data:
   from_station_name: "Wien Hbf"
   to_station_name: "Salzburg Hbf"
   max_connections: 3
+response_variable: trips
+```
+
+Example (future trip, arrive by 12:00):
+```yaml
+service: wiener_linien_monitor.oebb_trip_search
+data:
+  from_station_name: "Wien Hbf"
+  to_station_name: "Salzburg Hbf"
+  time: "2026-04-15 12:00:00"
+  time_mode: "arrival"
 response_variable: trips
 ```
 

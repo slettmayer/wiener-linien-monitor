@@ -5,6 +5,8 @@ Run with: pytest tests/ -v -m integration
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 import aiohttp
 import pytest
 
@@ -83,3 +85,43 @@ async def test_real_oebb_trip_search() -> None:
     assert leg["product"]
     assert leg["from_station"]
     assert leg["to_station"]
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_real_oebb_trip_search_future_departure() -> None:
+    """Search connections departing tomorrow at 08:00."""
+    tomorrow = datetime.now() + timedelta(days=1)  # noqa: DTZ005
+    future_time = tomorrow.replace(hour=8, minute=0, second=0).isoformat()
+
+    async with aiohttp.ClientSession() as session:
+        result = await async_oebb_trip_search(
+            session,
+            from_station_name="Wien Hbf",
+            to_station_name="Salzburg Hbf",
+            time=future_time,
+            time_mode="departure",
+        )
+
+    assert "message" not in result, f"API error: {result.get('message')}"
+    assert result["connections_count"] > 0
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_real_oebb_trip_search_arrival_mode() -> None:
+    """Search connections arriving by tomorrow at 12:00."""
+    tomorrow = datetime.now() + timedelta(days=1)  # noqa: DTZ005
+    future_time = tomorrow.replace(hour=12, minute=0, second=0).isoformat()
+
+    async with aiohttp.ClientSession() as session:
+        result = await async_oebb_trip_search(
+            session,
+            from_station_name="Wien Hbf",
+            to_station_name="Salzburg Hbf",
+            time=future_time,
+            time_mode="arrival",
+        )
+
+    assert "message" not in result, f"API error: {result.get('message')}"
+    assert result["connections_count"] > 0

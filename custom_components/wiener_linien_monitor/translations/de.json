@@ -100,6 +100,14 @@
         "max_connections": {
           "name": "Max. Verbindungen",
           "description": "Maximale Anzahl der zurückgegebenen Verbindungen."
+        },
+        "time": {
+          "name": "Zeit",
+          "description": "Abfahrts- oder Ankunftszeit. Wenn nicht angegeben, wird die aktuelle Zeit verwendet."
+        },
+        "time_mode": {
+          "name": "Zeitmodus",
+          "description": "Ob die angegebene Zeit eine Abfahrts- oder Ankunftszeit ist."
         }
       }
     }

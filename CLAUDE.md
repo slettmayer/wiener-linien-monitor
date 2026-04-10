@@ -21,7 +21,7 @@ Standard HA coordinator pattern with isolated API layer. All code lives in `cust
 
 Data flow (Wiener Linien): config -> coordinator -> `api.async_fetch_departures()` -> Wiener Linien API -> normalized departures -> sensor entity attributes.
 
-Data flow (OeBB): service call -> `__init__.py` handler -> `oebb_api.async_oebb_*()` -> OeBB Scotty API -> normalized response -> service response.
+Data flow (OeBB): service call -> `__init__.py` handler -> `oebb_api.async_oebb_*()` -> OeBB Scotty API -> normalized response -> service response. Trip search supports optional `time` (local time, CET/CEST) and `time_mode` ("departure"/"arrival") for future trip planning.
 
 ## Tech Stack
 - Python 3.12+, `from __future__ import annotations` in every file
