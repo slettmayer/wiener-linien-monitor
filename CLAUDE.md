@@ -1,23 +1,27 @@
 # Wiener Linien Monitor
-> Home Assistant custom integration for real-time Vienna public transport departures via the Wiener Linien OGD Realtime API.
+> Home Assistant custom integration for real-time Vienna public transport departures via the Wiener Linien OGD Realtime API and OeBB (Austrian Federal Railways) train data via the OeBB Scotty API.
 
 ## Quick Reference
 - **Lint**: `ruff check .`
 - **Format**: `ruff format .`
-- **Test**: `pytest tests/ -v`
-- **Validate (CI)**: Ruff + Hassfest + HACS + pytest (all must pass via `gate` job)
+- **Test (unit)**: `pytest tests/ -v -m "not integration"`
+- **Test (integration, real APIs)**: `pytest tests/ -v -m integration`
+- **Validate (CI)**: Ruff + Hassfest + HACS + pytest unit tests (all must pass via `gate` job)
 
 ## Architecture Overview
 Standard HA coordinator pattern with isolated API layer. All code lives in `custom_components/wiener_linien_monitor/`.
 
-- `api.py` -- pure async HTTP client (no HA imports, independently testable)
+- `api.py` -- pure async HTTP client for Wiener Linien (no HA imports, independently testable)
+- `oebb_api.py` -- pure async HTTP client for OeBB Scotty API (no HA imports, independently testable)
 - `coordinator.py` -- `DataUpdateCoordinator` subclass, one per stop, polls every 60s
 - `sensor.py` -- `CoordinatorEntity` + `SensorEntity`, supports YAML and config entry setup
-- `__init__.py` -- entry lifecycle, service registration (`fetch_departures`)
+- `__init__.py` -- entry lifecycle, service registration (`fetch_departures`, `oebb_search_station`, `oebb_station_board`, `oebb_trip_search`)
 - `config_flow.py` -- `ConfigFlow` + `OptionsFlow` for UI-driven setup
 - `const.py` -- all constants (URLs, keys, defaults)
 
-Data flow: config -> coordinator -> `api.async_fetch_departures()` -> Wiener Linien API -> normalized departures -> sensor entity attributes.
+Data flow (Wiener Linien): config -> coordinator -> `api.async_fetch_departures()` -> Wiener Linien API -> normalized departures -> sensor entity attributes.
+
+Data flow (OeBB): service call -> `__init__.py` handler -> `oebb_api.async_oebb_*()` -> OeBB Scotty API -> normalized response -> service response.
 
 ## Tech Stack
 - Python 3.12+, `from __future__ import annotations` in every file
@@ -38,14 +42,15 @@ Data flow: config -> coordinator -> `api.async_fetch_departures()` -> Wiener Lin
 - See [CONVENTIONS.md](docs/tech/CONVENTIONS.md) for full detail
 
 ## Business Domain
-Vienna public transport departure monitoring. Each configured RBL stop ID becomes a sensor entity showing departure count and details. The Wiener Linien OGD Realtime API is the sole external dependency (public, no auth). See [Domain Overview](docs/domain/OVERVIEW.md) for concepts and terminology.
+Vienna public transport departure monitoring and Austrian train connections. Each configured RBL stop ID becomes a sensor entity showing departure count and details. OeBB services provide on-demand station search, station departures, and trip planning. External APIs: Wiener Linien OGD Realtime API (public, no auth) and OeBB Scotty API (public, embedded auth). See [Domain Overview](docs/domain/OVERVIEW.md) for concepts and terminology.
 
 ## Structural Risks
-- Test coverage only exists for `api.py` -- coordinator, sensor, config flow are untested
+- Test coverage exists for `api.py` and `oebb_api.py` -- coordinator, sensor, config flow are untested
 - Version in `pyproject.toml` out of sync with `manifest.json` (CI uses manifest only)
 - Sentinel dict error pattern is fragile -- callers must check `if "message" in result`
 - YAML and config entry setup paths duplicate coordinator creation logic
 - `trafficInfoList` endpoint constant defined but unused
+- OeBB Scotty API is reverse-engineered (not officially documented) -- response structure may change without notice
 
 ## Detailed Guides
 - [Technical Context](docs/tech/README.md) -- architecture, tech stack, conventions, testing

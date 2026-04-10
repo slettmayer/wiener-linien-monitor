@@ -7,3 +7,86 @@ fetch_departures:
       selector:
         text:
           multiple: false
+
+oebb_search_station:
+  fields:
+    query:
+      required: true
+      example: "Wien Hauptbahnhof"
+      selector:
+        text:
+          multiple: false
+    max_results:
+      required: false
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 50
+          mode: box
+
+oebb_station_board:
+  fields:
+    station_id:
+      required: false
+      example: "1190100"
+      selector:
+        text:
+          multiple: false
+    station_name:
+      required: false
+      example: "Wien Hbf"
+      selector:
+        text:
+          multiple: false
+    board_type:
+      required: false
+      default: "DEP"
+      selector:
+        select:
+          options:
+            - "DEP"
+            - "ARR"
+    max_journeys:
+      required: false
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 50
+          mode: box
+
+oebb_trip_search:
+  fields:
+    from_station_id:
+      required: false
+      example: "1190100"
+      selector:
+        text:
+          multiple: false
+    from_station_name:
+      required: false
+      example: "Wien Hbf"
+      selector:
+        text:
+          multiple: false
+    to_station_id:
+      required: false
+      example: "8100002"
+      selector:
+        text:
+          multiple: false
+    to_station_name:
+      required: false
+      example: "Salzburg Hbf"
+      selector:
+        text:
+          multiple: false
+    max_connections:
+      required: false
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 10
+          mode: box

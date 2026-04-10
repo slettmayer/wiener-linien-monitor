@@ -22,8 +22,16 @@ from .const import (
     DEFAULT_MAX_DEPARTURES,
     DOMAIN,
     FETCH_DEPARTURES_SERVICE_NAME,
+    OEBB_SEARCH_STATION_SERVICE_NAME,
+    OEBB_STATION_BOARD_SERVICE_NAME,
+    OEBB_TRIP_SEARCH_SERVICE_NAME,
 )
 from .coordinator import WienerLinienDataUpdateCoordinator
+from .oebb_api import (
+    async_oebb_search_station,
+    async_oebb_station_board,
+    async_oebb_trip_search,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,6 +41,55 @@ FETCH_DEPARTURES_SCHEMA = vol.Schema(
     {
         vol.Required("stop_id"): vol.Coerce(str),
     }
+)
+
+
+def _require_one_of(*keys: str) -> vol.All:
+    """Voluptuous validator: at least one of the given keys must be present."""
+
+    def _validator(data: dict) -> dict:
+        if not any(data.get(k) for k in keys):
+            raise vol.Invalid(f"At least one of {', '.join(keys)} is required")
+        return data
+
+    return _validator
+
+
+OEBB_SEARCH_STATION_SCHEMA = vol.Schema(
+    {
+        vol.Required("query"): str,
+        vol.Optional("max_results", default=10): vol.All(int, vol.Range(min=1, max=50)),
+    }
+)
+
+OEBB_STATION_BOARD_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Optional("station_id"): vol.Coerce(str),
+            vol.Optional("station_name"): str,
+            vol.Optional("board_type", default="DEP"): vol.In(["DEP", "ARR"]),
+            vol.Optional("max_journeys", default=10): vol.All(
+                int, vol.Range(min=1, max=50)
+            ),
+        }
+    ),
+    _require_one_of("station_id", "station_name"),
+)
+
+OEBB_TRIP_SEARCH_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Optional("from_station_id"): vol.Coerce(str),
+            vol.Optional("from_station_name"): str,
+            vol.Optional("to_station_id"): vol.Coerce(str),
+            vol.Optional("to_station_name"): str,
+            vol.Optional("max_connections", default=5): vol.All(
+                int, vol.Range(min=1, max=10)
+            ),
+        }
+    ),
+    _require_one_of("from_station_id", "from_station_name"),
+    _require_one_of("to_station_id", "to_station_name"),
 )
 
 
@@ -51,6 +108,59 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         FETCH_DEPARTURES_SERVICE_NAME,
         fetch_departures,
         schema=FETCH_DEPARTURES_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+
+    async def oebb_search_station(call: ServiceCall) -> ServiceResponse:
+        """Search OeBB stations by name."""
+        return await async_oebb_search_station(
+            session,
+            call.data["query"],
+            call.data.get("max_results", 10),
+        )
+
+    hass.services.async_register(
+        DOMAIN,
+        OEBB_SEARCH_STATION_SERVICE_NAME,
+        oebb_search_station,
+        schema=OEBB_SEARCH_STATION_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+
+    async def oebb_station_board(call: ServiceCall) -> ServiceResponse:
+        """Fetch OeBB station departures or arrivals."""
+        return await async_oebb_station_board(
+            session,
+            station_id=call.data.get("station_id"),
+            station_name=call.data.get("station_name"),
+            board_type=call.data.get("board_type", "DEP"),
+            max_journeys=call.data.get("max_journeys", 10),
+        )
+
+    hass.services.async_register(
+        DOMAIN,
+        OEBB_STATION_BOARD_SERVICE_NAME,
+        oebb_station_board,
+        schema=OEBB_STATION_BOARD_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+
+    async def oebb_trip_search(call: ServiceCall) -> ServiceResponse:
+        """Search OeBB train connections."""
+        return await async_oebb_trip_search(
+            session,
+            from_station_id=call.data.get("from_station_id"),
+            from_station_name=call.data.get("from_station_name"),
+            to_station_id=call.data.get("to_station_id"),
+            to_station_name=call.data.get("to_station_name"),
+            max_connections=call.data.get("max_connections", 5),
+        )
+
+    hass.services.async_register(
+        DOMAIN,
+        OEBB_TRIP_SEARCH_SERVICE_NAME,
+        oebb_trip_search,
+        schema=OEBB_TRIP_SEARCH_SCHEMA,
         supports_response=SupportsResponse.ONLY,
     )
 
