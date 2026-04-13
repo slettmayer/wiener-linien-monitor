@@ -11,6 +11,7 @@ from custom_components.wiener_linien_monitor.oebb_api import (
     _build_request_body,
     _format_oebb_time,
     async_oebb_search_station,
+    async_oebb_service_alerts,
     async_oebb_station_board,
     async_oebb_trip_search,
 )
@@ -627,3 +628,119 @@ async def test_oebb_trip_search_default_time() -> None:
     # outDate and outTime should be set (to current time, not empty)
     assert len(req["outDate"]) == 8
     assert len(req["outTime"]) == 6
+
+
+# --- Sample HimSearch response ---
+
+SAMPLE_HIM_SEARCH_RESPONSE = {
+    "svcResL": [
+        {
+            "err": "OK",
+            "res": {
+                "msgL": [
+                    {
+                        "hid": "HIM_12345",
+                        "head": "Bauarbeiten Wien Hbf - Meidling",
+                        "text": "Wegen Bauarbeiten kommt es zu Zugausfällen.",
+                        "prio": 0,
+                        "sDate": "20260410",
+                        "eDate": "20260420",
+                    },
+                    {
+                        "hid": "HIM_67890",
+                        "head": "Schienenersatzverkehr Linz - Wels",
+                        "text": "Busse statt Züge zwischen Linz und Wels.",
+                        "prio": 1,
+                        "sDate": "20260412",
+                        "eDate": "20260415",
+                    },
+                ]
+            },
+        }
+    ]
+}
+
+SAMPLE_HIM_SEARCH_EMPTY = {
+    "svcResL": [
+        {
+            "err": "OK",
+            "res": {"msgL": []},
+        }
+    ]
+}
+
+
+# --- Tests for async_oebb_service_alerts ---
+
+
+@pytest.mark.asyncio
+async def test_oebb_service_alerts_success() -> None:
+    """Test successful service alerts fetch."""
+    session = _make_session(SAMPLE_HIM_SEARCH_RESPONSE)
+
+    result = await async_oebb_service_alerts(session)
+
+    assert "message" not in result
+    assert result["alerts_count"] == 2
+    assert result["alerts"][0]["id"] == "HIM_12345"
+    assert result["alerts"][0]["headline"] == "Bauarbeiten Wien Hbf - Meidling"
+    assert result["alerts"][0]["priority"] == 0
+    assert result["alerts"][0]["start_date"] == "2026-04-10"
+    assert result["alerts"][0]["end_date"] == "2026-04-20"
+    assert result["alerts"][1]["id"] == "HIM_67890"
+    assert result["alerts"][1]["priority"] == 1
+
+
+@pytest.mark.asyncio
+async def test_oebb_service_alerts_empty() -> None:
+    """Test service alerts with no active alerts."""
+    session = _make_session(SAMPLE_HIM_SEARCH_EMPTY)
+
+    result = await async_oebb_service_alerts(session)
+
+    assert "message" not in result
+    assert result["alerts_count"] == 0
+    assert result["alerts"] == []
+
+
+@pytest.mark.asyncio
+async def test_oebb_service_alerts_timeout() -> None:
+    """Test timeout handling."""
+    session = _make_session({}, raise_error=TimeoutError())
+
+    result = await async_oebb_service_alerts(session)
+
+    assert result == {"message": "Timeout"}
+
+
+@pytest.mark.asyncio
+async def test_oebb_service_alerts_client_error() -> None:
+    """Test aiohttp client error handling."""
+    session = _make_session({}, raise_error=aiohttp.ClientError("Connection failed"))
+
+    result = await async_oebb_service_alerts(session)
+
+    assert result == {"message": "No data"}
+
+
+@pytest.mark.asyncio
+async def test_oebb_service_alerts_api_error() -> None:
+    """Test handling of API-level error response."""
+    session = _make_session(SAMPLE_API_ERROR)
+
+    result = await async_oebb_service_alerts(session)
+
+    assert result["message"] == "Invalid request"
+
+
+@pytest.mark.asyncio
+async def test_oebb_service_alerts_product_filter() -> None:
+    """Test that product filter is passed to the API."""
+    session = _make_session(SAMPLE_HIM_SEARCH_EMPTY)
+
+    await async_oebb_service_alerts(session, product_filter=33)
+
+    call_args = session.post.call_args
+    body = call_args.kwargs.get("json") or call_args[1].get("json")
+    req = body["svcReqL"][0]["req"]
+    assert req["himFltrL"][0]["value"] == "33"

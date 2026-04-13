@@ -103,3 +103,22 @@ oebb_trip_search:
           options:
             - "departure"
             - "arrival"
+
+oebb_service_alerts:
+  fields:
+    max_alerts:
+      required: false
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 100
+          mode: box
+    product_filter:
+      required: false
+      default: 1023
+      selector:
+        number:
+          min: 1
+          max: 1023
+          mode: box

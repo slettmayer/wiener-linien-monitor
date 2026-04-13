@@ -23,12 +23,14 @@ from .const import (
     DOMAIN,
     FETCH_DEPARTURES_SERVICE_NAME,
     OEBB_SEARCH_STATION_SERVICE_NAME,
+    OEBB_SERVICE_ALERTS_SERVICE_NAME,
     OEBB_STATION_BOARD_SERVICE_NAME,
     OEBB_TRIP_SEARCH_SERVICE_NAME,
 )
 from .coordinator import WienerLinienDataUpdateCoordinator
 from .oebb_api import (
     async_oebb_search_station,
+    async_oebb_service_alerts,
     async_oebb_station_board,
     async_oebb_trip_search,
 )
@@ -94,6 +96,15 @@ OEBB_TRIP_SEARCH_SCHEMA = vol.All(
     ),
     _require_one_of("from_station_id", "from_station_name"),
     _require_one_of("to_station_id", "to_station_name"),
+)
+
+OEBB_SERVICE_ALERTS_SCHEMA = vol.Schema(
+    {
+        vol.Optional("max_alerts", default=20): vol.All(int, vol.Range(min=1, max=100)),
+        vol.Optional("product_filter", default=1023): vol.All(
+            int, vol.Range(min=1, max=1023)
+        ),
+    }
 )
 
 
@@ -167,6 +178,22 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         OEBB_TRIP_SEARCH_SERVICE_NAME,
         oebb_trip_search,
         schema=OEBB_TRIP_SEARCH_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+
+    async def oebb_service_alerts(call: ServiceCall) -> ServiceResponse:
+        """Fetch OeBB service alerts."""
+        return await async_oebb_service_alerts(
+            session,
+            max_alerts=call.data.get("max_alerts", 20),
+            product_filter=call.data.get("product_filter", 1023),
+        )
+
+    hass.services.async_register(
+        DOMAIN,
+        OEBB_SERVICE_ALERTS_SERVICE_NAME,
+        oebb_service_alerts,
+        schema=OEBB_SERVICE_ALERTS_SCHEMA,
         supports_response=SupportsResponse.ONLY,
     )
 

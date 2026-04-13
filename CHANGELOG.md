@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0
+
+- New service: `oebb_service_alerts` -- fetch current OeBB service alerts and disruptions via HimSearch
+- Supports product type filtering via bitmask (e.g., only long-distance trains)
+
 ## 0.7.0
 
 - Add optional `time` and `time_mode` fields to `oebb_trip_search` for future trip planning

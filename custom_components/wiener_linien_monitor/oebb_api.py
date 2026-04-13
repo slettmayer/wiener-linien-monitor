@@ -437,3 +437,86 @@ async def async_oebb_trip_search(
     except Exception as err:
         _LOGGER.warning("Unexpected error searching OeBB trips: %s", err)
         return {"message": "No data"}
+
+
+def _format_oebb_date(date_str: str) -> str:
+    """Convert OeBB YYYYMMDD date to ISO 8601 date string."""
+    try:
+        dt = datetime.strptime(date_str, "%Y%m%d")  # noqa: DTZ007
+        return dt.date().isoformat()
+    except (ValueError, TypeError):
+        return date_str
+
+
+async def async_oebb_service_alerts(
+    session: aiohttp.ClientSession,
+    max_alerts: int = 20,
+    product_filter: int = 1023,
+) -> dict[str, Any]:
+    """Fetch current OeBB service alerts and disruptions.
+
+    Returns a dict with alerts_count and alerts list.
+    product_filter is a bitmask (1=ICE/RJX, 2=IC/EC, 4=NJ, 8=D/EN,
+    16=REX/R, 32=S-Bahn, 64=Bus, 128=Ferry, 256=U-Bahn, 512=Tram,
+    1023=all).
+    Returns a dict with just 'message' on error.
+    """
+    try:
+        body = _build_request_body(
+            [
+                {
+                    "meth": "HimSearch",
+                    "req": {
+                        "himFltrL": [
+                            {
+                                "type": "PROD",
+                                "mode": "INC",
+                                "value": str(product_filter),
+                            }
+                        ],
+                        "maxNum": max_alerts,
+                    },
+                }
+            ]
+        )
+
+        async with asyncio.timeout(OEBB_API_TIMEOUT):
+            response = await session.post(OEBB_API_ENDPOINT, json=body)
+            data = await response.json()
+
+        svc_res = data.get("svcResL", [{}])[0]
+        if svc_res.get("err", "OK") != "OK":
+            _LOGGER.warning(
+                "OeBB HimSearch error: %s", svc_res.get("errTxt", "Unknown")
+            )
+            return {"message": svc_res.get("errTxt", "API error")}
+
+        msg_list = svc_res.get("res", {}).get("msgL", [])
+
+        alerts = []
+        for msg in msg_list:
+            alerts.append(
+                {
+                    "id": msg.get("hid", ""),
+                    "headline": msg.get("head", ""),
+                    "text": msg.get("text", ""),
+                    "priority": msg.get("prio", 0),
+                    "start_date": _format_oebb_date(msg.get("sDate", "")),
+                    "end_date": _format_oebb_date(msg.get("eDate", "")),
+                }
+            )
+
+        return {
+            "alerts_count": len(alerts),
+            "alerts": alerts,
+        }
+
+    except TimeoutError:
+        _LOGGER.error("Timeout fetching OeBB service alerts")
+        return {"message": "Timeout"}
+    except aiohttp.ClientError as err:
+        _LOGGER.error("Error fetching OeBB service alerts: %s", err)
+        return {"message": "No data"}
+    except Exception as err:
+        _LOGGER.warning("Unexpected error fetching OeBB service alerts: %s", err)
+        return {"message": "No data"}
