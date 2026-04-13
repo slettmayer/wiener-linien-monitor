@@ -630,6 +630,43 @@ async def test_oebb_trip_search_default_time() -> None:
     assert len(req["outTime"]) == 6
 
 
+@pytest.mark.asyncio
+async def test_oebb_trip_search_direct_only() -> None:
+    """Test that direct_only=True sends numChg=0 to the API."""
+    session = _make_session(SAMPLE_TRIP_SEARCH_RESPONSE)
+
+    result = await async_oebb_trip_search(
+        session,
+        from_station_id="1190100",
+        to_station_id="8100002",
+        direct_only=True,
+    )
+
+    assert "message" not in result
+
+    call_args = session.post.call_args
+    body = call_args.kwargs.get("json") or call_args[1].get("json")
+    req = body["svcReqL"][0]["req"]
+    assert req["numChg"] == 0
+
+
+@pytest.mark.asyncio
+async def test_oebb_trip_search_direct_only_default() -> None:
+    """Test that numChg is not sent when direct_only is False (default)."""
+    session = _make_session(SAMPLE_TRIP_SEARCH_RESPONSE)
+
+    result = await async_oebb_trip_search(
+        session, from_station_id="1190100", to_station_id="8100002"
+    )
+
+    assert "message" not in result
+
+    call_args = session.post.call_args
+    body = call_args.kwargs.get("json") or call_args[1].get("json")
+    req = body["svcReqL"][0]["req"]
+    assert "numChg" not in req
+
+
 # --- Sample HimSearch response ---
 
 SAMPLE_HIM_SEARCH_RESPONSE = {

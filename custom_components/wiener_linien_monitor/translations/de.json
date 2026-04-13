@@ -108,6 +108,10 @@
         "time_mode": {
           "name": "Zeitmodus",
           "description": "Ob die angegebene Zeit eine Abfahrts- oder Ankunftszeit ist."
+        },
+        "direct_only": {
+          "name": "Nur Direktverbindungen",
+          "description": "Nur Direktverbindungen ohne Umstieg anzeigen."
         }
       }
     },

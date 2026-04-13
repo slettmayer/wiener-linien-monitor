@@ -108,6 +108,10 @@
         "time_mode": {
           "name": "Time Mode",
           "description": "Whether the specified time is a departure or arrival time."
+        },
+        "direct_only": {
+          "name": "Direct Only",
+          "description": "Only show direct connections without changes."
         }
       }
     },
