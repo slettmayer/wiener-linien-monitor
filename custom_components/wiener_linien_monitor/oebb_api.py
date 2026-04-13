@@ -311,7 +311,7 @@ async def async_oebb_trip_search(
             "getPolyline": False,
         }
         if direct_only:
-            trip_req["numChg"] = 0
+            trip_req["maxChg"] = 0
 
         body = _build_request_body([{"meth": "TripSearch", "req": trip_req}])
 

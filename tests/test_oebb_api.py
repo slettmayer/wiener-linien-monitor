@@ -647,7 +647,7 @@ async def test_oebb_trip_search_direct_only() -> None:
     call_args = session.post.call_args
     body = call_args.kwargs.get("json") or call_args[1].get("json")
     req = body["svcReqL"][0]["req"]
-    assert req["numChg"] == 0
+    assert req["maxChg"] == 0
 
 
 @pytest.mark.asyncio
@@ -664,7 +664,7 @@ async def test_oebb_trip_search_direct_only_default() -> None:
     call_args = session.post.call_args
     body = call_args.kwargs.get("json") or call_args[1].get("json")
     req = body["svcReqL"][0]["req"]
-    assert "numChg" not in req
+    assert "maxChg" not in req
 
 
 # --- Sample HimSearch response ---

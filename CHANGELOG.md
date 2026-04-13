@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+
+- Fix `direct_only` filter in `oebb_trip_search` -- use correct OeBB API parameter (`maxChg` instead of `numChg`)
+
 ## 0.9.0
 
 - Add optional `direct_only` parameter to `oebb_trip_search` to filter for direct connections only

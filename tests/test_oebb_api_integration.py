@@ -130,6 +130,24 @@ async def test_real_oebb_trip_search_arrival_mode() -> None:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
+async def test_real_oebb_trip_search_direct_only() -> None:
+    """Search direct connections from Wien Hbf to Salzburg Hbf."""
+    async with aiohttp.ClientSession() as session:
+        result = await async_oebb_trip_search(
+            session,
+            from_station_name="Wien Hbf",
+            to_station_name="Salzburg Hbf",
+            direct_only=True,
+        )
+
+    assert "message" not in result, f"API error: {result.get('message')}"
+    assert result["connections_count"] > 0
+    for con in result["connections"]:
+        assert con["changes"] == 0, f"Expected direct, got {con['changes']} changes"
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
 async def test_real_oebb_service_alerts() -> None:
     """Fetch current service alerts."""
     async with aiohttp.ClientSession() as session:
