@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.2
+
+- Fix product bitmask in `oebb_service_alerts` to include Westbahn and other private operators
+
 ## 0.9.1
 
 - Fix `direct_only` filter in `oebb_trip_search` -- use correct OeBB API parameter (`maxChg` instead of `numChg`)
