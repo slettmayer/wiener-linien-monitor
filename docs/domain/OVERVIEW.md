@@ -54,7 +54,7 @@ Three on-demand services for OeBB train data. All return data as service respons
 
 `wiener_linien_monitor.oebb_trip_search` -- Search connections between two stations. Accepts `from_station_id`/`from_station_name` and `to_station_id`/`to_station_name`. Optional parameters: `time` (local CET/CEST, defaults to now), `time_mode` (`"departure"` or `"arrival"`, defaults to `"departure"`), `direct_only` (boolean, filters to non-stop connections only via `maxChg: 0`). Returns connections with departure/arrival times, duration, number of changes, and individual legs with product, stations, times, and platforms.
 
-`wiener_linien_monitor.oebb_service_alerts` -- Fetch current OeBB service disruptions and infrastructure alerts via the `HimSearch` API method. Accepts `max_alerts` (default 20, max 100) and `product_filter` (bitmask: 1=ICE/RJX, 2=IC/EC, 4=NJ, 8=D/EN, 16=REX/R, 32=S-Bahn, 64=Bus, 128=Ferry, 256=U-Bahn, 512=Tram, 1023=all). Returns `alerts_count` and `alerts` list with `id`, `headline`, `text`, `priority`, `start_date`, `end_date`, `from_station`, `to_station`.
+`wiener_linien_monitor.oebb_service_alerts` -- Fetch current OeBB service disruptions and infrastructure alerts via the `HimSearch` API method. Accepts `max_alerts` (default 20, max 100) and `product_filter` (bitmask: 1=ICE/RJX, 2=IC/EC, 4=NJ, 8=D/EN, 16=REX/R, 32=S-Bahn, 64=Bus, 128=Ferry, 256=U-Bahn, 512=Tram, 4096=private operators like Westbahn/RegioJet, 65535=all). Returns `alerts_count` and `alerts` list with `id`, `headline`, `text`, `priority`, `start_date`, `end_date`, `from_station`, `to_station`.
 
 ### Terminology Glossary
 
