@@ -21,7 +21,7 @@ Standard HA coordinator pattern with isolated API layer. All code lives in `cust
 
 Data flow (Wiener Linien): config -> coordinator -> `api.async_fetch_departures()` -> Wiener Linien API -> normalized departures -> sensor entity attributes.
 
-Data flow (OeBB): service call -> `__init__.py` handler -> `oebb_api.async_oebb_*()` -> OeBB Scotty API -> normalized response -> service response. Trip search supports optional `time` (local time, CET/CEST) and `time_mode` ("departure"/"arrival") for future trip planning.
+Data flow (OeBB): service call -> `__init__.py` handler -> `oebb_api.async_oebb_*()` -> OeBB Scotty API -> normalized response -> service response. Trip search supports optional `time` (local time, CET/CEST), `time_mode` ("departure"/"arrival"), and `direct_only` (non-stop connections only).
 
 ## Tech Stack
 - Python 3.12+, `from __future__ import annotations` in every file
@@ -51,6 +51,7 @@ Vienna public transport departure monitoring and Austrian train connections. Eac
 - YAML and config entry setup paths duplicate coordinator creation logic
 - `trafficInfoList` endpoint constant defined but unused
 - OeBB Scotty API is reverse-engineered (not officially documented) -- response structure may change without notice
+- `datetime.now()` without timezone in `oebb_api.py` (suppressed via `noqa`) -- may be incorrect in non-local TZ containers
 
 ## Detailed Guides
 - [Technical Context](docs/tech/README.md) -- architecture, tech stack, conventions, testing

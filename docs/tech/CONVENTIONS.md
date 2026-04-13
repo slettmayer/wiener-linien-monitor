@@ -57,7 +57,11 @@ Documents the coding conventions, naming patterns, import ordering, error handli
 - Errors signaled via sentinel dict with `"message"` key (e.g., `{"message": "Timeout"}`)
 - Callers check `if "message" in result`
 - Coordinator returns stale data on error (prevents sensor unavailability)
-- Logging levels: `_LOGGER.error()` for `TimeoutError`/`ClientError`, `_LOGGER.warning()` for unexpected exceptions and empty responses
+- Logging levels: `_LOGGER.error()` for `TimeoutError`/`ClientError`, `_LOGGER.warning()` for unexpected exceptions, empty responses, and OeBB API-level errors (HTTP success but `svcResL[0].err != "OK"`)
+- OeBB API-level errors return the API's own error text in the sentinel dict `"message"` value (not hardcoded strings like `"Timeout"`)
+
+### Ruff Suppression Conventions
+- `# noqa: DTZ005` on `datetime.now()` and `# noqa: DTZ007` on `datetime.strptime()` in `oebb_api.py` -- OeBB API uses timezone-naive date/time strings. New OeBB time-handling code should follow the same suppress-not-fix pattern.
 
 ### Constants Centralization
 - All magic values (URLs, timeouts, config keys, defaults, service names) live exclusively in `const.py`

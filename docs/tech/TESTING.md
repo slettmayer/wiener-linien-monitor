@@ -30,7 +30,7 @@ tests/
 
 ### HA Mock Strategy
 - `conftest.py` stubs out the entire `homeassistant` package via `sys.modules` patching
-- This allows `api.py` to be imported and tested without a running HA instance
+- This allows `api.py` and `oebb_api.py` to be imported and tested without a running HA instance (neither has HA imports, so the stub is technically a no-op for them but ensures a clean import chain)
 - The mock injection happens at import time, before any test module loads
 
 ### Mocking Approach
@@ -50,6 +50,7 @@ tests/
 - Flat arrange-act-assert structure
 - No explicit AAA comment markers
 - Each test: set up mock session, call function, assert on result dict
+- POST body assertion pattern: some OeBB tests inspect `session.post.call_args` to verify request body contents (e.g., `body["svcReqL"][0]["req"]`) -- used when testing parameters that affect the API request rather than the normalized response (e.g., `direct_only`, `product_filter`, `time`/`time_mode`)
 
 ### Integration Tests
 - `test_oebb_api_integration.py` hits the real OeBB API to verify response parsing against live data
