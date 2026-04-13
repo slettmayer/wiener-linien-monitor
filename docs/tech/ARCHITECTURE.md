@@ -55,15 +55,17 @@ api.py  <--  coordinator.py  <--  sensor.py
 - Zero HA imports. Independently testable.
 
 **`oebb_api.py`** -- Owns all HTTP communication with the OeBB Scotty API.
-- Three public functions: `async_oebb_search_station`, `async_oebb_station_board`, `async_oebb_trip_search`
-- Internal helpers: `_build_request_body` (POST envelope), `_async_resolve_station` (station name-to-ID resolution via LocMatch), `_format_oebb_time` (date+time to ISO 8601)
+- Four public functions: `async_oebb_search_station`, `async_oebb_station_board`, `async_oebb_trip_search`, `async_oebb_service_alerts`
+- Internal helpers: `_build_request_body` (POST envelope), `_async_loc_match` (raw LocMatch POST call), `_async_resolve_station` (station name-to-ID resolution, delegates to `_async_loc_match`), `_format_oebb_time` (date+time to ISO 8601), `_format_oebb_date` (OeBB `YYYYMMDD` to ISO 8601 date)
 - Accepts station IDs (`extId`) or station names (auto-resolved via LocMatch) for board/trip services
+- `async_oebb_trip_search` supports `time`/`time_mode` for future planning and `direct_only` (sets `maxChg: 0`) for non-stop connections
+- `async_oebb_service_alerts` uses the `HimSearch` method with optional `product_filter` bitmask
 - Output: normalized dicts or error dict with `"message"` key
 - Zero HA imports. Independently testable.
 
 **`coordinator.py`** -- Owns polling lifecycle for a single stop.
 - Wraps `api.py` in a `DataUpdateCoordinator`
-- Polls every 60 seconds (configurable via `const.SCAN_INTERVAL`)
+- Polls every 60 seconds (configurable via `const.MIN_TIME_BETWEEN_UPDATES`)
 - On API error with existing data: returns stale data (prevents sensor unavailability)
 - One coordinator instance per configured stop ID
 
@@ -74,11 +76,13 @@ api.py  <--  coordinator.py  <--  sensor.py
 
 **`__init__.py`** -- Owns entry lifecycle and service registration.
 - Creates one coordinator per stop on `async_setup_entry`
-- Registers four services in `async_setup`:
+- Registers five services in `async_setup`:
   - `fetch_departures` -- Wiener Linien departures (calls `api.py` directly)
   - `oebb_search_station` -- OeBB station search by name
   - `oebb_station_board` -- OeBB departures/arrivals at a station
   - `oebb_trip_search` -- OeBB connections between two stations
+  - `oebb_service_alerts` -- OeBB service disruptions and infrastructure alerts
+- Defines `_require_one_of(*keys)` -- voluptuous validator factory enforcing "at least one of these keys" on service schemas (used by station board and trip search)
 - Stores coordinators in `hass.data[DOMAIN][entry.entry_id]`
 
 **`config_flow.py`** -- Owns UI setup and options editing.
@@ -104,10 +108,12 @@ The on-demand service (`fetch_departures`) bypasses steps 2-3 and calls `api.py`
 
 1. User calls a service (e.g., `oebb_trip_search`) with station IDs or names
 2. `__init__.py` handler calls the corresponding `oebb_api.py` function
-3. If station names given: `_async_resolve_station` calls LocMatch to resolve to IDs
-4. `oebb_api.py` sends POST to `https://fahrplan.oebb.at/bin/mgate.exe` with the appropriate method (LocMatch, StationBoard, or TripSearch)
+3. If station names given: `_async_resolve_station` delegates to `_async_loc_match` to resolve to IDs
+4. `oebb_api.py` sends POST to `https://fahrplan.oebb.at/bin/mgate.exe` with the appropriate method (LocMatch, StationBoard, TripSearch, or HimSearch)
 5. Response is parsed: product names resolved from `common.prodL`, times converted to ISO 8601, locations resolved from `common.locL`
 6. Normalized result returned directly as service response
+
+`oebb_service_alerts` follows a simpler path (steps 1-2, then 4-6) -- no station resolution needed. It calls the `HimSearch` method with an optional `product_filter` bitmask to filter by transport type.
 
 ### Dual Setup Support
 Both YAML and config entry setup paths are supported for backwards compatibility:
@@ -129,6 +135,7 @@ Both YAML and config entry setup paths are supported for backwards compatibility
 - YAML setup path duplicates coordinator creation logic that also exists in `__init__.py`. If one path is updated, the other may be forgotten.
 - No rate limiting or backoff on API errors -- repeated failures still poll every 60s.
 - OeBB Scotty API is reverse-engineered from the webapp -- response structure may change without notice. Integration tests help catch this early.
+- `datetime.now()` used without timezone in `oebb_api.py` (suppressed via `# noqa: DTZ005`) -- may produce incorrect times when HA runs in a container with a non-local timezone.
 
 ## Extension Guidelines
 - New modules should follow the existing layering: pure logic with no HA deps where possible, HA integration in a separate module.

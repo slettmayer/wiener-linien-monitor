@@ -52,7 +52,9 @@ Three on-demand services for OeBB train data. All return data as service respons
 
 `wiener_linien_monitor.oebb_station_board` -- Fetch departures or arrivals at a station. Accepts `station_id` or `station_name` (auto-resolved via LocMatch). Returns product name, direction, planned/real-time times, and platform.
 
-`wiener_linien_monitor.oebb_trip_search` -- Search connections between two stations. Accepts `from_station_id`/`from_station_name` and `to_station_id`/`to_station_name`. Returns connections with departure/arrival times, duration, number of changes, and individual legs with product, stations, times, and platforms.
+`wiener_linien_monitor.oebb_trip_search` -- Search connections between two stations. Accepts `from_station_id`/`from_station_name` and `to_station_id`/`to_station_name`. Optional parameters: `time` (local CET/CEST, defaults to now), `time_mode` (`"departure"` or `"arrival"`, defaults to `"departure"`), `direct_only` (boolean, filters to non-stop connections only via `maxChg: 0`). Returns connections with departure/arrival times, duration, number of changes, and individual legs with product, stations, times, and platforms.
+
+`wiener_linien_monitor.oebb_service_alerts` -- Fetch current OeBB service disruptions and infrastructure alerts via the `HimSearch` API method. Accepts `max_alerts` (default 20, max 100) and `product_filter` (bitmask: 1=ICE/RJX, 2=IC/EC, 4=NJ, 8=D/EN, 16=REX/R, 32=S-Bahn, 64=Bus, 128=Ferry, 256=U-Bahn, 512=Tram, 1023=all). Returns `alerts_count` and `alerts` list with `id`, `headline`, `text`, `priority`, `start_date`, `end_date`, `from_station`, `to_station`.
 
 ### Terminology Glossary
 
@@ -76,6 +78,12 @@ Three on-demand services for OeBB train data. All return data as service respons
 | StationBoard | OeBB API method for fetching departures/arrivals at a station |
 | TripSearch | OeBB API method for planning connections between two stations |
 | `prodL` / `prodX` | OeBB response pattern: products (train types) are in a shared list; journeys reference them by index |
+| HimSearch | OeBB API method for fetching service alerts and disruption messages |
+| `product_filter` / `himFltrL` | Bitmask used in HimSearch to filter alerts by transport product type |
+| `maxChg` | OeBB TripSearch request field capping the number of allowed changes; `0` implements `direct_only` |
+| `outFrwd` | OeBB TripSearch request boolean; `true` = departure time, `false` = arrival time |
+| `time_mode` | Integration-level parameter abstracting `outFrwd` into `"departure"` / `"arrival"` values |
+| `direct_only` | Integration-level filter for `oebb_trip_search`; restricts results to zero-transfer connections |
 
 ### External Integrations
 
@@ -85,7 +93,7 @@ Three on-demand services for OeBB train data. All return data as service respons
 
 **OeBB Scotty API** -- Public, embedded authentication (AID token in request body).
 - Single endpoint: `https://fahrplan.oebb.at/bin/mgate.exe` (POST with JSON body)
-- Methods used: LocMatch (station search), StationBoard (departures/arrivals), TripSearch (connections)
+- Methods used: LocMatch (station search), StationBoard (departures/arrivals), TripSearch (connections), HimSearch (service alerts)
 - Response pattern: shared reference lists (`common.prodL`, `common.locL`) with index-based references from journey data
 - Not officially documented -- reverse-engineered from the OeBB webapp
 

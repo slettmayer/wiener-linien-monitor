@@ -65,6 +65,7 @@ Documents the languages, frameworks, build tools, testing infrastructure, and ex
 ## Known Risks
 - Version in `pyproject.toml` is out of sync with `manifest.json` -- could cause confusion if `pyproject.toml` version is ever referenced.
 - `trafficInfoList` endpoint constant is defined but unused -- dead code.
+- `uv.lock` exists locally but is untracked and not in `.gitignore` -- local environment reproducibility is not enforced for contributors or CI.
 
 ## Extension Guidelines
 - Add new Python dependencies to `manifest.json` under `requirements` (HA convention), not `pyproject.toml`.
