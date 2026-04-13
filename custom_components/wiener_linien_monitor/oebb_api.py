@@ -268,6 +268,7 @@ async def async_oebb_trip_search(
     max_connections: int = 5,
     time: str | None = None,
     time_mode: str = "departure",
+    direct_only: bool = False,
 ) -> dict[str, Any]:
     """Search for train connections between two OeBB stations.
 
@@ -275,6 +276,8 @@ async def async_oebb_trip_search(
     for both departure and arrival stations.
     Optionally accepts a time (ISO 8601) and time_mode ("departure" or
     "arrival") to plan future trips. Defaults to current time, departing.
+    When direct_only is True, only direct connections (no changes) are
+    returned.
     Returns a dict with connection details including legs.
     Returns a dict with just 'message' on error.
     """
@@ -296,24 +299,21 @@ async def async_oebb_trip_search(
         )
         out_frwd = time_mode != "arrival"
 
-        body = _build_request_body(
-            [
-                {
-                    "meth": "TripSearch",
-                    "req": {
-                        "depLocL": [{"lid": from_station["lid"], "type": "S"}],
-                        "arrLocL": [{"lid": to_station["lid"], "type": "S"}],
-                        "outDate": search_dt.strftime("%Y%m%d"),
-                        "outTime": search_dt.strftime("%H%M%S"),
-                        "outFrwd": out_frwd,
-                        "numF": max_connections,
-                        "jnyFltrL": [{"type": "PROD", "mode": "INC", "value": "1023"}],
-                        "getPasslist": False,
-                        "getPolyline": False,
-                    },
-                }
-            ]
-        )
+        trip_req: dict[str, Any] = {
+            "depLocL": [{"lid": from_station["lid"], "type": "S"}],
+            "arrLocL": [{"lid": to_station["lid"], "type": "S"}],
+            "outDate": search_dt.strftime("%Y%m%d"),
+            "outTime": search_dt.strftime("%H%M%S"),
+            "outFrwd": out_frwd,
+            "numF": max_connections,
+            "jnyFltrL": [{"type": "PROD", "mode": "INC", "value": "1023"}],
+            "getPasslist": False,
+            "getPolyline": False,
+        }
+        if direct_only:
+            trip_req["numChg"] = 0
+
+        body = _build_request_body([{"meth": "TripSearch", "req": trip_req}])
 
         async with asyncio.timeout(OEBB_API_TIMEOUT):
             response = await session.post(OEBB_API_ENDPOINT, json=body)

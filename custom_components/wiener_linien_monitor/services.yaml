@@ -103,6 +103,11 @@ oebb_trip_search:
           options:
             - "departure"
             - "arrival"
+    direct_only:
+      required: false
+      default: false
+      selector:
+        boolean:
 
 oebb_service_alerts:
   fields:
