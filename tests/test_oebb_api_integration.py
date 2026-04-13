@@ -12,6 +12,7 @@ import pytest
 
 from custom_components.wiener_linien_monitor.oebb_api import (
     async_oebb_search_station,
+    async_oebb_service_alerts,
     async_oebb_station_board,
     async_oebb_trip_search,
 )
@@ -125,3 +126,22 @@ async def test_real_oebb_trip_search_arrival_mode() -> None:
 
     assert "message" not in result, f"API error: {result.get('message')}"
     assert result["connections_count"] > 0
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_real_oebb_service_alerts() -> None:
+    """Fetch current service alerts."""
+    async with aiohttp.ClientSession() as session:
+        result = await async_oebb_service_alerts(session, max_alerts=5)
+
+    assert "message" not in result, f"API error: {result.get('message')}"
+    assert isinstance(result["alerts_count"], int)
+    assert isinstance(result["alerts"], list)
+
+    if result["alerts_count"] > 0:
+        first = result["alerts"][0]
+        assert first["id"]
+        assert first["headline"]
+        assert "from_station" in first
+        assert "to_station" in first

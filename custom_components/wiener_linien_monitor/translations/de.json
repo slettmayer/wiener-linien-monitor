@@ -110,6 +110,20 @@
           "description": "Ob die angegebene Zeit eine Abfahrts- oder Ankunftszeit ist."
         }
       }
+    },
+    "oebb_service_alerts": {
+      "name": "ÖBB: Störungsmeldungen",
+      "description": "Aktuelle ÖBB-Störungsmeldungen und Betriebshinweise abrufen.",
+      "fields": {
+        "max_alerts": {
+          "name": "Max. Meldungen",
+          "description": "Maximale Anzahl der zurückgegebenen Meldungen."
+        },
+        "product_filter": {
+          "name": "Produktfilter",
+          "description": "Bitmaske zur Filterung nach Verkehrsmittel (1=ICE/RJX, 2=IC/EC, 4=NJ, 8=D/EN, 16=REX/R, 32=S-Bahn, 64=Bus, 128=Fähre, 256=U-Bahn, 512=Straßenbahn, 1023=alle)."
+        }
+      }
     }
   }
 }

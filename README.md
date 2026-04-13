@@ -137,3 +137,26 @@ response_variable: trips
 ```
 
 The response includes `from_station`, `to_station`, `connections_count`, and `connections` (list with `departure`, `arrival`, `duration`, `changes`, `platform_departure`, `platform_arrival`, and `legs` with per-segment details).
+
+---
+
+### `wiener_linien_monitor.oebb_service_alerts`
+
+Fetch current OeBB service alerts and disruptions (delays, cancellations, track closures).
+
+| Field            | Required | Description                                          |
+|------------------|----------|------------------------------------------------------|
+| `max_alerts`     | No       | Max alerts to return (default: 20)                   |
+| `product_filter` | No       | Bitmask for transport types (default: 1023 = all)    |
+
+**Product filter bitmask values:** 1=ICE/RJX, 2=IC/EC, 4=NJ, 8=D/EN, 16=REX/R, 32=S-Bahn, 64=Bus, 128=Ferry, 256=U-Bahn, 512=Tram. Combine by adding values (e.g., 3 = ICE + IC only).
+
+Example:
+```yaml
+service: wiener_linien_monitor.oebb_service_alerts
+data:
+  max_alerts: 10
+response_variable: alerts
+```
+
+The response includes `alerts_count` and `alerts` (list with `id`, `headline`, `text`, `priority`, `start_date`, `end_date`, `from_station`, `to_station`).
