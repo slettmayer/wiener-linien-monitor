@@ -637,12 +637,22 @@ SAMPLE_HIM_SEARCH_RESPONSE = {
         {
             "err": "OK",
             "res": {
+                "common": {
+                    "locL": [
+                        {"name": "Wien Hbf", "extId": "1190100"},
+                        {"name": "Wien Meidling", "extId": "8100514"},
+                        {"name": "Linz Hbf", "extId": "8100013"},
+                        {"name": "Wels Hbf", "extId": "8100008"},
+                    ]
+                },
                 "msgL": [
                     {
                         "hid": "HIM_12345",
                         "head": "Bauarbeiten Wien Hbf - Meidling",
                         "text": "Wegen Bauarbeiten kommt es zu Zugausfällen.",
                         "prio": 0,
+                        "fLocX": 0,
+                        "tLocX": 1,
                         "sDate": "20260410",
                         "eDate": "20260420",
                     },
@@ -651,10 +661,12 @@ SAMPLE_HIM_SEARCH_RESPONSE = {
                         "head": "Schienenersatzverkehr Linz - Wels",
                         "text": "Busse statt Züge zwischen Linz und Wels.",
                         "prio": 1,
+                        "fLocX": 2,
+                        "tLocX": 3,
                         "sDate": "20260412",
                         "eDate": "20260415",
                     },
-                ]
+                ],
             },
         }
     ]
@@ -664,7 +676,7 @@ SAMPLE_HIM_SEARCH_EMPTY = {
     "svcResL": [
         {
             "err": "OK",
-            "res": {"msgL": []},
+            "res": {"common": {"locL": []}, "msgL": []},
         }
     ]
 }
@@ -687,8 +699,12 @@ async def test_oebb_service_alerts_success() -> None:
     assert result["alerts"][0]["priority"] == 0
     assert result["alerts"][0]["start_date"] == "2026-04-10"
     assert result["alerts"][0]["end_date"] == "2026-04-20"
+    assert result["alerts"][0]["from_station"] == "Wien Hbf"
+    assert result["alerts"][0]["to_station"] == "Wien Meidling"
     assert result["alerts"][1]["id"] == "HIM_67890"
     assert result["alerts"][1]["priority"] == 1
+    assert result["alerts"][1]["from_station"] == "Linz Hbf"
+    assert result["alerts"][1]["to_station"] == "Wels Hbf"
 
 
 @pytest.mark.asyncio

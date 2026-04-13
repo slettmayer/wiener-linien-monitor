@@ -159,4 +159,4 @@ data:
 response_variable: alerts
 ```
 
-The response includes `alerts_count` and `alerts` (list with `id`, `headline`, `text`, `priority`, `start_date`, `end_date`).
+The response includes `alerts_count` and `alerts` (list with `id`, `headline`, `text`, `priority`, `start_date`, `end_date`, `from_station`, `to_station`).

@@ -143,3 +143,5 @@ async def test_real_oebb_service_alerts() -> None:
         first = result["alerts"][0]
         assert first["id"]
         assert first["headline"]
+        assert "from_station" in first
+        assert "to_station" in first

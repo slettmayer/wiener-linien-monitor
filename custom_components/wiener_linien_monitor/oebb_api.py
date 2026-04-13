@@ -491,10 +491,25 @@ async def async_oebb_service_alerts(
             )
             return {"message": svc_res.get("errTxt", "API error")}
 
-        msg_list = svc_res.get("res", {}).get("msgL", [])
+        res = svc_res.get("res", {})
+        loc_list = res.get("common", {}).get("locL", [])
+        msg_list = res.get("msgL", [])
 
         alerts = []
         for msg in msg_list:
+            from_loc_idx = msg.get("fLocX", -1)
+            to_loc_idx = msg.get("tLocX", -1)
+            from_station = (
+                loc_list[from_loc_idx].get("name", "")
+                if 0 <= from_loc_idx < len(loc_list)
+                else None
+            )
+            to_station = (
+                loc_list[to_loc_idx].get("name", "")
+                if 0 <= to_loc_idx < len(loc_list)
+                else None
+            )
+
             alerts.append(
                 {
                     "id": msg.get("hid", ""),
@@ -503,6 +518,8 @@ async def async_oebb_service_alerts(
                     "priority": msg.get("prio", 0),
                     "start_date": _format_oebb_date(msg.get("sDate", "")),
                     "end_date": _format_oebb_date(msg.get("eDate", "")),
+                    "from_station": from_station,
+                    "to_station": to_station,
                 }
             )
 
