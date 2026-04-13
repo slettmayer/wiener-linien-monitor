@@ -147,9 +147,9 @@ Fetch current OeBB service alerts and disruptions (delays, cancellations, track 
 | Field            | Required | Description                                          |
 |------------------|----------|------------------------------------------------------|
 | `max_alerts`     | No       | Max alerts to return (default: 20)                   |
-| `product_filter` | No       | Bitmask for transport types (default: 1023 = all)    |
+| `product_filter` | No       | Bitmask for transport types (default: 65535 = all)   |
 
-**Product filter bitmask values:** 1=ICE/RJX, 2=IC/EC, 4=NJ, 8=D/EN, 16=REX/R, 32=S-Bahn, 64=Bus, 128=Ferry, 256=U-Bahn, 512=Tram. Combine by adding values (e.g., 3 = ICE + IC only).
+**Product filter bitmask values:** 1=ICE/RJX, 2=IC/EC, 4=NJ, 8=D/EN, 16=REX/R, 32=S-Bahn, 64=Bus, 128=Ferry, 256=U-Bahn, 512=Tram, 4096=private operators (Westbahn/RegioJet). Combine by adding values (e.g., 3 = ICE + IC only).
 
 Example:
 ```yaml
