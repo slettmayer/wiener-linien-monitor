@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.0
+
+- Add optional `direct_only` parameter to `oebb_trip_search` to filter for direct connections only
+
 ## 0.8.0
 
 - New service: `oebb_service_alerts` -- fetch current OeBB service alerts and disruptions via HimSearch
