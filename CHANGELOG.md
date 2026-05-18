@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.3
+
+- Bump actions/checkout (Dependabot)
+
 ## 0.9.2
 
 - Fix product bitmask in `oebb_service_alerts` to include Westbahn and other private operators
