@@ -10,5 +10,5 @@
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/slettmayer/wiener-linien-monitor/issues",
-  "version": "0.9.3"
+  "version": "0.9.4"
 }

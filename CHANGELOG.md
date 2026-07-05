@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.4
+
+- Bump actions/checkout (Dependabot)
+
 ## 0.9.3
 
 - Bump actions/checkout (Dependabot)
